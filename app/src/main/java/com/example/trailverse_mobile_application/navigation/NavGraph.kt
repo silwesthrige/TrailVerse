@@ -8,9 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.trailverse_mobile_application.ui.screens.AddLocationScreen
 import com.example.trailverse_mobile_application.ui.screens.DetailScreen
-import com.example.trailverse_mobile_application.ui.screens.HomeScreen
 import com.example.trailverse_mobile_application.ui.screens.LoginScreen
-import com.example.trailverse_mobile_application.ui.screens.ProfileScreen
+import com.example.trailverse_mobile_application.ui.screens.MainScreen
 import com.example.trailverse_mobile_application.ui.screens.RegisterScreen
 
 @Composable
@@ -21,7 +20,7 @@ fun TrailVerseNavGraph() {
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Routes.HOME) {
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 },
@@ -31,18 +30,17 @@ fun TrailVerseNavGraph() {
         composable(Routes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Routes.HOME) {
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 },
                 onNavigateToLogin = { navController.popBackStack() }
             )
         }
-        composable(Routes.HOME) {
-            HomeScreen(
+        composable(Routes.MAIN) {
+            MainScreen(
                 onLocationClick = { id -> navController.navigate(Routes.detail(id)) },
-                onAddLocation = { navController.navigate(Routes.ADD_LOCATION) },
-                onProfileClick = { navController.navigate(Routes.PROFILE) }
+                onAddLocation = { navController.navigate(Routes.ADD_LOCATION) }
             )
         }
         composable(Routes.ADD_LOCATION) {
@@ -54,9 +52,6 @@ fun TrailVerseNavGraph() {
         ) { backStackEntry ->
             val locationId = backStackEntry.arguments?.getString("locationId") ?: ""
             DetailScreen(locationId = locationId, onBack = { navController.popBackStack() })
-        }
-        composable(Routes.PROFILE) {
-            ProfileScreen(onBack = { navController.popBackStack() })
         }
     }
 }
