@@ -20,21 +20,31 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lint.kotlin.metadata.Visibility
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trailverse_mobile_application.ui.theme.HeroGradient
+import com.example.trailverse_mobile_application.viewmodel.AuthUiState
+import com.example.trailverse_mobile_application.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val uiState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState) {
+        if (uiState is AuthUiState.Success) {
+            onLoginSuccess()
+            authViewModel.resetState()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(HeroGradient)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Hero section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -66,7 +76,6 @@ fun LoginScreen(
                 )
             }
 
-            // Form card, rounded top corners overlapping the hero
             Surface(
                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                 color = MaterialTheme.colorScheme.surface,
@@ -120,11 +129,24 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(28.dp))
                     Button(
-                        onClick = onLoginSuccess,
+                        onClick = { authViewModel.login(email, password) },
+                        enabled = uiState !is AuthUiState.Loading,
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth().height(54.dp)
                     ) {
-                        Text("Log In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        if (uiState is AuthUiState.Loading) {
+                            CircularProgressIndicator(modifier = Modifier.size(22.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Text("Log In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        }
+                    }
+                    if (uiState is AuthUiState.Error) {
+                        Text(
+                            (uiState as AuthUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
                     Spacer(Modifier.height(12.dp))
                     TextButton(
