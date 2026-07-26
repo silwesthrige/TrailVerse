@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trailverse_mobile_application.ui.components.LocationCard
+import com.example.trailverse_mobile_application.viewmodel.FavoriteViewModel
 import com.example.trailverse_mobile_application.viewmodel.LocationViewModel
 import com.example.trailverse_mobile_application.viewmodel.LocationViewModelFactory
 
@@ -28,8 +29,11 @@ fun ExploreScreen(onLocationClick: (String) -> Unit) {
     val locationViewModel: LocationViewModel = viewModel(
         factory = LocationViewModelFactory(context)
     )
+    val favoriteViewModel: FavoriteViewModel = viewModel()
+
     val locations by locationViewModel.locations.collectAsState()
     val userVotes by locationViewModel.userVotes.collectAsState()
+    val savedIds by favoriteViewModel.savedIds.collectAsState()
     var showMap by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -72,9 +76,11 @@ fun ExploreScreen(onLocationClick: (String) -> Unit) {
                         LocationCard(
                             location = location,
                             userVote = userVotes[location.id] ?: 0,
+                            isSaved = savedIds.contains(location.id),
                             onClick = { onLocationClick(location.id) },
                             onUpvote = { locationViewModel.vote(location.id, 1) },
                             onDownvote = { locationViewModel.vote(location.id, -1) },
+                            onToggleSave = { favoriteViewModel.toggleSave(location.id) },
                             modifier = Modifier.padding(bottom = 14.dp)
                         )
                     }

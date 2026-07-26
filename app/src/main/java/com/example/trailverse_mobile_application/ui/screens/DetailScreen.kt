@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
@@ -31,6 +33,7 @@ import com.example.trailverse_mobile_application.ui.theme.GoldStar
 import com.example.trailverse_mobile_application.ui.theme.categoryBrush
 import com.example.trailverse_mobile_application.viewmodel.DetailViewModel
 import com.example.trailverse_mobile_application.viewmodel.DetailViewModelFactory
+import com.example.trailverse_mobile_application.viewmodel.FavoriteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +41,13 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
     val detailViewModel: DetailViewModel = viewModel(
         factory = DetailViewModelFactory(locationId)
     )
+    val favoriteViewModel: FavoriteViewModel = viewModel()
+
     val location by detailViewModel.location.collectAsState()
     val comments by detailViewModel.comments.collectAsState()
     val userVote by detailViewModel.userVote.collectAsState()
+    val savedIds by favoriteViewModel.savedIds.collectAsState()
+    val isSaved = savedIds.contains(locationId)
     var commentText by remember { mutableStateOf("") }
 
     if (location == null) {
@@ -87,7 +94,14 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     CircleIconButton(icon = Icons.Default.ArrowBack, onClick = onBack)
-                    CircleIconButton(icon = Icons.Default.Share, onClick = {})
+                    Row {
+                        CircleIconButton(
+                            icon = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                            onClick = { favoriteViewModel.toggleSave(locationId) }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        CircleIconButton(icon = Icons.Default.Share, onClick = {})
+                    }
                 }
 
                 Surface(
