@@ -12,9 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.trailverse_mobile_application.model.Location
 import com.example.trailverse_mobile_application.ui.theme.GoldStar
 import com.example.trailverse_mobile_application.ui.theme.categoryBrush
@@ -42,14 +44,28 @@ fun LocationCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .background(categoryBrush(location.category))
         ) {
-            Icon(
-                Icons.Default.LocationOn,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.85f),
-                modifier = Modifier.align(Alignment.Center).height(52.dp)
-            )
+            if (location.imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = location.imageUrl,
+                    contentDescription = location.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(categoryBrush(location.category))
+                ) {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.align(Alignment.Center).height(52.dp)
+                    )
+                }
+            }
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = Color.White.copy(alpha = 0.92f),
