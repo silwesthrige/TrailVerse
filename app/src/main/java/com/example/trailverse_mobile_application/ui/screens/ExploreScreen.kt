@@ -1,5 +1,6 @@
 package com.example.trailverse_mobile_application.ui.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,22 +11,25 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.trailverse_mobile_application.model.Location
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trailverse_mobile_application.ui.components.LocationCard
-
-private val exploreLocations = listOf(
-    Location("1", "Hidden Waterfall Trail", "A secluded waterfall reachable after a 2hr forest hike.", "Nature", upvotes = 42, downvotes = 3),
-    Location("2", "Rooftop Sunset Point", "Best sunset view in the city, free entry after 5pm.", "Viewpoint", upvotes = 88, downvotes = 6),
-    Location("3", "Old Town Night Market", "Street food, live music, and local crafts every Friday.", "Food", upvotes = 65, downvotes = 10),
-    Location("4", "Cliffside Cave", "Coastal cave only visible at low tide.", "Adventure", upvotes = 30, downvotes = 2)
-)
+import com.example.trailverse_mobile_application.viewmodel.LocationViewModel
+import com.example.trailverse_mobile_application.viewmodel.LocationViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(onLocationClick: (String) -> Unit) {
+    val context = LocalContext.current
+    val locationViewModel: LocationViewModel = viewModel(
+        factory = LocationViewModelFactory(context)
+    )
+    val locations by locationViewModel.locations.collectAsState()
+    val userVotes by locationViewModel.userVotes.collectAsState()
     var showMap by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -47,21 +51,33 @@ fun ExploreScreen(onLocationClick: (String) -> Unit) {
         }
     ) { padding ->
         if (showMap) {
-            MapScreen(onLocationClick = onLocationClick)
+            MapScreen(
+                locations = locations,
+                onLocationClick = onLocationClick
+            )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(exploreLocations, key = { it.id }) { location ->
-                    LocationCard(
-                        location = location,
-                        userVote = 0,
-                        onClick = { onLocationClick(location.id) },
-                        onUpvote = {},
-                        onDownvote = {},
-                        modifier = Modifier.padding(bottom = 14.dp)
-                    )
+            if (locations.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No locations yet — be the first to add one!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(locations, key = { it.id }) { location ->
+                        LocationCard(
+                            location = location,
+                            userVote = userVotes[location.id] ?: 0,
+                            onClick = { onLocationClick(location.id) },
+                            onUpvote = { locationViewModel.vote(location.id, 1) },
+                            onDownvote = { locationViewModel.vote(location.id, -1) },
+                            modifier = Modifier.padding(bottom = 14.dp)
+                        )
+                    }
                 }
             }
         }

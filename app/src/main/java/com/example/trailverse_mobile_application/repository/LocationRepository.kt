@@ -2,6 +2,7 @@ package com.example.trailverse_mobile_application.repository
 
 import com.example.trailverse_mobile_application.model.Location
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -12,10 +13,10 @@ class LocationRepository {
     private val db = FirebaseFirestore.getInstance()
     private val locationsRef = db.collection("locations")
 
-    // Live feed of all locations, newest first
+    // Live feed of ALL locations, newest first — used by Home/Explore/Map/Saved
     fun getLocationsFlow(): Flow<List<Location>> = callbackFlow {
         val listener = locationsRef
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -26,6 +27,19 @@ class LocationRepository {
                 } ?: emptyList()
                 trySend(locations)
             }
+        awaitClose { listener.remove() }
+    }
+
+    // Live feed of a SINGLE location by ID — used by DetailScreen
+    fun getLocationFlow(locationId: String): Flow<Location?> = callbackFlow {
+        val listener = locationsRef.document(locationId).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            val location = snapshot?.toObject(Location::class.java)?.copy(id = snapshot.id)
+            trySend(location)
+        }
         awaitClose { listener.remove() }
     }
 
@@ -75,11 +89,9 @@ class LocationRepository {
                 var upvotes = (locationSnapshot.getLong("upvotes") ?: 0L).toInt()
                 var downvotes = (locationSnapshot.getLong("downvotes") ?: 0L).toInt()
 
-                // Undo previous vote's effect
                 if (previousVote == 1) upvotes--
                 if (previousVote == -1) downvotes--
 
-                // Apply new vote (tapping the same arrow again clears it)
                 val finalVote = if (previousVote == newVote) 0 else newVote
                 if (finalVote == 1) upvotes++
                 if (finalVote == -1) downvotes++

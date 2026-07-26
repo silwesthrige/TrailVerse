@@ -19,46 +19,66 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.trailverse_mobile_application.model.Comment
 import com.example.trailverse_mobile_application.ui.components.VoteButton
 import com.example.trailverse_mobile_application.ui.theme.GoldStar
 import com.example.trailverse_mobile_application.ui.theme.categoryBrush
+import com.example.trailverse_mobile_application.viewmodel.DetailViewModel
+import com.example.trailverse_mobile_application.viewmodel.DetailViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(locationId: String, onBack: () -> Unit) {
-    var userVote by remember { mutableStateOf(0) }
-    var score by remember { mutableStateOf(42) }
+    val detailViewModel: DetailViewModel = viewModel(
+        factory = DetailViewModelFactory(locationId)
+    )
+    val location by detailViewModel.location.collectAsState()
+    val comments by detailViewModel.comments.collectAsState()
+    val userVote by detailViewModel.userVote.collectAsState()
     var commentText by remember { mutableStateOf("") }
-    val comments = remember {
-        mutableStateOf(
-            listOf(
-                Comment("c1", locationId, "u1", "Alex", "Absolutely stunning, go early to avoid crowds!"),
-                Comment("c2", locationId, "u2", "Priya", "The trail is steep but worth it.")
-            )
-        )
+
+    if (location == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
+    val loc = location!!
+    val totalVotes = loc.upvotes + loc.downvotes
+    val ratio = if (totalVotes > 0) loc.upvotes.toFloat() / totalVotes else 0f
+    val filledStars = (ratio * 5).toInt().coerceIn(0, 5)
+
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        // Hero header
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(320.dp)
-                    .background(categoryBrush("Nature"))
+                    .background(categoryBrush(loc.category))
             ) {
-                Icon(
-                    Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.35f),
-                    modifier = Modifier.align(Alignment.Center).size(100.dp)
-                )
+                if (loc.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = loc.imageUrl,
+                        contentDescription = loc.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.35f),
+                        modifier = Modifier.align(Alignment.Center).size(100.dp)
+                    )
+                }
 
-                // Top row: back + share, floating over the image
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -70,14 +90,13 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                     CircleIconButton(icon = Icons.Default.Share, onClick = {})
                 }
 
-                // Category badge
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = Color.White.copy(alpha = 0.92f),
                     modifier = Modifier.align(Alignment.BottomStart).padding(20.dp)
                 ) {
                     Text(
-                        "Nature",
+                        loc.category,
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
@@ -87,7 +106,6 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
             }
         }
 
-        // Content card overlapping the hero
         item {
             Surface(
                 shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
@@ -103,69 +121,52 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Hidden Waterfall Trail",
+                                loc.name,
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(Modifier.height(6.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                repeat(4) {
-                                    Icon(Icons.Default.Star, contentDescription = null, tint = GoldStar, modifier = Modifier.size(16.dp))
+                                repeat(5) { i ->
+                                    Icon(
+                                        if (i < filledStars) Icons.Default.Star else Icons.Default.StarBorder,
+                                        contentDescription = null,
+                                        tint = GoldStar,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                                Icon(Icons.Default.StarBorder, contentDescription = null, tint = GoldStar, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(6.dp))
                                 Text(
-                                    "4.0 · 45 reviews",
+                                    "$totalVotes votes",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                         VoteButton(
-                            score = score,
+                            score = loc.score,
                             userVote = userVote,
-                            onUpvote = {
-                                score += if (userVote == 1) -1 else if (userVote == -1) 2 else 1
-                                userVote = if (userVote == 1) 0 else 1
-                            },
-                            onDownvote = {
-                                score += if (userVote == -1) 1 else if (userVote == 1) -2 else -1
-                                userVote = if (userVote == -1) 0 else -1
-                            }
+                            onUpvote = { detailViewModel.vote(1) },
+                            onDownvote = { detailViewModel.vote(-1) }
                         )
-                    }
-
-                    Spacer(Modifier.height(20.dp))
-
-                    // Info chips row
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        InfoChip(label = "2h 15m")
-                        InfoChip(label = "4.2 km")
-                        InfoChip(label = "Moderate")
                     }
 
                     Spacer(Modifier.height(24.dp))
                     Text("About", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "A secluded waterfall reachable after a 2hr forest hike. Bring good shoes and plenty of water — the last stretch is a steep scramble but the view is unforgettable. Best visited early morning to catch the light through the canopy.",
+                        loc.description,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 22.sp
                     )
 
                     Spacer(Modifier.height(28.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Comments (${comments.value.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(
+                        "Comments (${comments.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(14.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -180,16 +181,8 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                         Spacer(Modifier.width(8.dp))
                         IconButton(
                             onClick = {
-                                if (commentText.isNotBlank()) {
-                                    comments.value = comments.value + Comment(
-                                        id = "c${comments.value.size + 1}",
-                                        locationId = locationId,
-                                        userId = "me",
-                                        userName = "You",
-                                        text = commentText
-                                    )
-                                    commentText = ""
-                                }
+                                detailViewModel.postComment(commentText)
+                                commentText = ""
                             },
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -202,8 +195,19 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
             }
         }
 
-        items(comments.value) { comment ->
-            CommentRow(comment)
+        if (comments.isEmpty()) {
+            item {
+                Text(
+                    "No comments yet — be the first to share your experience!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+                )
+            }
+        } else {
+            items(comments) { comment ->
+                CommentRow(comment)
+            }
         }
 
         item { Spacer(Modifier.height(24.dp)) }
@@ -226,20 +230,6 @@ private fun CircleIconButton(icon: androidx.compose.ui.graphics.vector.ImageVect
 }
 
 @Composable
-private fun InfoChip(label: String) {
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-        )
-    }
-}
-
-@Composable
 private fun CommentRow(comment: Comment) {
     Row(
         modifier = Modifier
@@ -254,7 +244,7 @@ private fun CommentRow(comment: Comment) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                comment.userName.take(1),
+                comment.userName.take(1).uppercase(),
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontWeight = FontWeight.Bold
             )
