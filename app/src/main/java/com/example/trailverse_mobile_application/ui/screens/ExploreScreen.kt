@@ -34,6 +34,7 @@ fun ExploreScreen(onLocationClick: (String) -> Unit) {
     val locations by locationViewModel.locations.collectAsState()
     val userVotes by locationViewModel.userVotes.collectAsState()
     val savedIds by favoriteViewModel.savedIds.collectAsState()
+    val isLoading by locationViewModel.isLoading.collectAsState()
     var showMap by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -54,20 +55,30 @@ fun ExploreScreen(onLocationClick: (String) -> Unit) {
             )
         }
     ) { padding ->
-        if (showMap) {
-            MapScreen(
-                locations = locations,
-                onLocationClick = onLocationClick
-            )
-        } else {
-            if (locations.isEmpty()) {
+        when {
+            showMap -> {
+                MapScreen(
+                    locations = locations,
+                    onLocationClick = onLocationClick
+                )
+            }
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            locations.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("No locations yet — be the first to add one!", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            } else {
+            }
+            else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(16.dp)

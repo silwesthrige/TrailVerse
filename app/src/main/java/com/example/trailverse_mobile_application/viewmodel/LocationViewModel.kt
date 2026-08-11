@@ -33,6 +33,9 @@ class LocationViewModel(context: Context) : ViewModel() {
     private val _addState = MutableStateFlow<AddLocationUiState>(AddLocationUiState.Idle)
     val addState: StateFlow<AddLocationUiState> = _addState
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     init {
         loadLocations()
     }
@@ -41,6 +44,7 @@ class LocationViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             repository.getLocationsFlow().collect { list ->
                 _locations.value = list
+                _isLoading.value = false
                 loadUserVotes(list)
             }
         }

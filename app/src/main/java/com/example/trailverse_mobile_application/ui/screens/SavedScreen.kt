@@ -1,6 +1,7 @@
 package com.example.trailverse_mobile_application.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,7 @@ fun SavedScreen(onLocationClick: (String) -> Unit) {
     val allLocations by locationViewModel.locations.collectAsState()
     val userVotes by locationViewModel.userVotes.collectAsState()
     val savedIds by favoriteViewModel.savedIds.collectAsState()
+    val isLoading by locationViewModel.isLoading.collectAsState()
 
     val savedLocations = allLocations.filter { savedIds.contains(it.id) }
 
@@ -48,36 +50,47 @@ fun SavedScreen(onLocationClick: (String) -> Unit) {
             )
         }
     ) { padding ->
-        if (savedLocations.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.BookmarkBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text("No saved places yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(savedLocations, key = { it.id }) { location ->
-                    LocationCard(
-                        location = location,
-                        userVote = userVotes[location.id] ?: 0,
-                        isSaved = true,
-                        onClick = { onLocationClick(location.id) },
-                        onUpvote = { locationViewModel.vote(location.id, 1) },
-                        onDownvote = { locationViewModel.vote(location.id, -1) },
-                        onToggleSave = { favoriteViewModel.toggleSave(location.id) },
-                        modifier = Modifier.padding(bottom = 14.dp)
+            savedLocations.isEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.BookmarkBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Text("No saved places yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(savedLocations, key = { it.id }) { location ->
+                        LocationCard(
+                            location = location,
+                            userVote = userVotes[location.id] ?: 0,
+                            isSaved = true,
+                            onClick = { onLocationClick(location.id) },
+                            onUpvote = { locationViewModel.vote(location.id, 1) },
+                            onDownvote = { locationViewModel.vote(location.id, -1) },
+                            onToggleSave = { favoriteViewModel.toggleSave(location.id) },
+                            modifier = Modifier.padding(bottom = 14.dp)
+                        )
+                    }
                 }
             }
         }

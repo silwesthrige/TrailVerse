@@ -9,29 +9,65 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trailverse_mobile_application.ui.theme.GoldStar
 import com.example.trailverse_mobile_application.ui.theme.HeroGradient
+import com.example.trailverse_mobile_application.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
+fun ProfileScreen(
+    onBack: () -> Unit,
+    onLoggedOut: () -> Unit,
+    profileViewModel: ProfileViewModel = viewModel()
+) {
+    val stats by profileViewModel.stats.collectAsState()
+    val isLoading by profileViewModel.isLoading.collectAsState()
+    var showLogoutConfirm by remember { mutableStateOf(false) }
+
+    val user = profileViewModel.currentUser
+    val displayName = user?.displayName?.takeIf { it.isNotBlank() } ?: "Traveler"
+    val email = user?.email ?: ""
+
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            title = { Text("Log out?") },
+            text = { Text("You'll need to sign in again to add locations, vote, or comment.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutConfirm = false
+                    profileViewModel.logout()
+                    onLoggedOut()
+                }) {
+                    Text("Log out", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Hero banner with avatar overlapping the bottom edge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -43,6 +79,12 @@ fun ProfileScreen(onBack: () -> Unit) {
                     modifier = Modifier.padding(8.dp).align(Alignment.TopStart)
                 ) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                IconButton(
+                    onClick = { showLogoutConfirm = true },
+                    modifier = Modifier.padding(8.dp).align(Alignment.TopEnd)
+                ) {
+                    Icon(Icons.Default.Logout, contentDescription = "Log out", tint = Color.White)
                 }
                 Box(
                     modifier = Modifier
@@ -71,20 +113,26 @@ fun ProfileScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Shan", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text(
-                    "Trail explorer since 2026",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(displayName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                if (email.isNotBlank()) {
+                    Text(
+                        email,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
 
                 Spacer(Modifier.height(24.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatCard(icon = Icons.Default.Favorite, label = "Contributions", value = "12")
-                    StatCard(icon = Icons.Default.Star, label = "Reputation", value = "348")
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.padding(vertical = 20.dp))
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatCard(icon = Icons.Default.Favorite, label = "Contributions", value = "${stats.contributions}")
+                        StatCard(icon = Icons.Default.Star, label = "Reputation", value = "${stats.reputation}")
+                    }
                 }
 
                 Spacer(Modifier.height(28.dp))
@@ -101,7 +149,7 @@ fun ProfileScreen(onBack: () -> Unit) {
                 contentPadding = PaddingValues(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(listOf("Explorer", "Top Contributor", "Local Guide", "Early Adopter")) { badge ->
+                items(earnedBadges(stats.contributions, stats.reputation)) { badge ->
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer
@@ -124,6 +172,15 @@ fun ProfileScreen(onBack: () -> Unit) {
             }
         }
     }
+}
+
+private fun earnedBadges(contributions: Int, reputation: Int): List<String> {
+    val badges = mutableListOf("Explorer")
+    if (contributions >= 1) badges.add("First Contribution")
+    if (contributions >= 5) badges.add("Top Contributor")
+    if (reputation >= 10) badges.add("Trusted Local Guide")
+    if (contributions == 0 && reputation == 0) badges.add("Just Getting Started")
+    return badges
 }
 
 @Composable

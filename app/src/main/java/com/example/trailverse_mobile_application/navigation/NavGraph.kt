@@ -1,6 +1,7 @@
 package com.example.trailverse_mobile_application.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,12 +12,15 @@ import com.example.trailverse_mobile_application.ui.screens.DetailScreen
 import com.example.trailverse_mobile_application.ui.screens.LoginScreen
 import com.example.trailverse_mobile_application.ui.screens.MainScreen
 import com.example.trailverse_mobile_application.ui.screens.RegisterScreen
+import com.example.trailverse_mobile_application.viewmodel.AuthViewModel
 
 @Composable
 fun TrailVerseNavGraph() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = viewModel()
+    val startDestination = if (authViewModel.isLoggedIn()) Routes.MAIN else Routes.LOGIN
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
@@ -40,7 +44,12 @@ fun TrailVerseNavGraph() {
         composable(Routes.MAIN) {
             MainScreen(
                 onLocationClick = { id -> navController.navigate(Routes.detail(id)) },
-                onAddLocation = { navController.navigate(Routes.ADD_LOCATION) }
+                onAddLocation = { navController.navigate(Routes.ADD_LOCATION) },
+                onLoggedOut = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Routes.ADD_LOCATION) {

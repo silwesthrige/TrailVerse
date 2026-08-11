@@ -2,22 +2,23 @@ package com.example.trailverse_mobile_application.ui.screens
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.getValue
 import com.example.trailverse_mobile_application.navigation.Routes
 import com.example.trailverse_mobile_application.ui.components.BottomNavBar
 
 @Composable
 fun MainScreen(
     onLocationClick: (String) -> Unit,
-    onAddLocation: () -> Unit
+    onAddLocation: () -> Unit,
+    onLoggedOut: () -> Unit
 ) {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
@@ -59,7 +60,10 @@ fun MainScreen(
                 SavedScreen(onLocationClick = onLocationClick)
             }
             composable(Routes.PROFILE) {
-                ProfileScreen(onBack = { bottomNavController.navigate(Routes.HOME) })
+                ProfileScreen(
+                    onBack = { bottomNavController.navigate(Routes.HOME) },
+                    onLoggedOut = onLoggedOut
+                )
             }
         }
     }

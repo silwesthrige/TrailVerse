@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ fun HomeScreen(
     val locations by locationViewModel.locations.collectAsState()
     val userVotes by locationViewModel.userVotes.collectAsState()
     val savedIds by favoriteViewModel.savedIds.collectAsState()
+    val isLoading by locationViewModel.isLoading.collectAsState()
 
     val filtered = remember(query, locations) {
         locations.filter { it.name.contains(query, ignoreCase = true) }
@@ -64,36 +66,47 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        if (locations.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                Text("No locations yet — be the first to add one!", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                item {
-                    SearchBar(
-                        query = query,
-                        onQueryChange = { query = it },
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                items(filtered, key = { it.id }) { location ->
-                    LocationCard(
-                        location = location,
-                        userVote = userVotes[location.id] ?: 0,
-                        isSaved = savedIds.contains(location.id),
-                        onClick = { onLocationClick(location.id) },
-                        onUpvote = { locationViewModel.vote(location.id, 1) },
-                        onDownvote = { locationViewModel.vote(location.id, -1) },
-                        onToggleSave = { favoriteViewModel.toggleSave(location.id) },
-                        modifier = Modifier.padding(bottom = 14.dp)
-                    )
+            }
+            locations.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No locations yet — be the first to add one!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    item {
+                        SearchBar(
+                            query = query,
+                            onQueryChange = { query = it },
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                    items(filtered, key = { it.id }) { location ->
+                        LocationCard(
+                            location = location,
+                            userVote = userVotes[location.id] ?: 0,
+                            isSaved = savedIds.contains(location.id),
+                            onClick = { onLocationClick(location.id) },
+                            onUpvote = { locationViewModel.vote(location.id, 1) },
+                            onDownvote = { locationViewModel.vote(location.id, -1) },
+                            onToggleSave = { favoriteViewModel.toggleSave(location.id) },
+                            modifier = Modifier.padding(bottom = 14.dp)
+                        )
+                    }
                 }
             }
         }
