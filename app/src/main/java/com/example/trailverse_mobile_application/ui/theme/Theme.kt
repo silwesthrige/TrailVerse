@@ -1,6 +1,5 @@
 package com.example.trailverse_mobile_application.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,15 +8,19 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
-    primary = ForestGreen,
+    primary = OceanBlue,
     onPrimary = Color.White,
+    primaryContainer = SkyBlueLight,
+    onPrimaryContainer = OceanBlueDeep,
     secondary = SunsetOrange,
     onSecondary = Color.White,
-    tertiary = SkyBlue,
+    secondaryContainer = SunGoldLight,
+    onSecondaryContainer = SunsetRed,
+    tertiary = SunGold,
     background = SandBeige,
     surface = CardBackground,
     onBackground = CharcoalText,
@@ -26,13 +29,15 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = ForestGreenLight,
+    primary = SkyBlueLight,
     onPrimary = Color.Black,
+    primaryContainer = OceanBlueDeep,
+    onPrimaryContainer = SkyBlueLight,
     secondary = SunsetOrangeLight,
     onSecondary = Color.Black,
-    tertiary = SkyBlue,
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
+    tertiary = SunGold,
+    background = Color(0xFF12161C),
+    surface = Color(0xFF1B212B),
     onBackground = Color.White,
     onSurface = Color.White,
     error = ErrorRed

@@ -1,5 +1,6 @@
 package com.example.trailverse_mobile_application.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -13,18 +14,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.trailverse_mobile_application.ui.theme.HeroGradient
+import com.example.trailverse_mobile_application.R
+import com.example.trailverse_mobile_application.ui.theme.SplashGradient
 import com.example.trailverse_mobile_application.viewmodel.AuthUiState
 import com.example.trailverse_mobile_application.viewmodel.AuthViewModel
-
+import com.example.trailverse_mobile_application.viewmodel.ResetPasswordUiState
+import androidx.compose.ui.draw.clip
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -36,6 +39,10 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val uiState by authViewModel.uiState.collectAsState()
 
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    val resetPasswordState by authViewModel.resetPasswordState.collectAsState()
+
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             onLoginSuccess()
@@ -43,7 +50,65 @@ fun LoginScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(HeroGradient)) {
+    if (showForgotPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showForgotPasswordDialog = false
+                authViewModel.resetPasswordResetState()
+            },
+            title = { Text("Reset password") },
+            text = {
+                Column {
+                    Text(
+                        "Enter your email and we'll send you a link to reset your password.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = { resetEmail = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (resetPasswordState is ResetPasswordUiState.Error) {
+                        Text(
+                            (resetPasswordState as ResetPasswordUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                    if (resetPasswordState is ResetPasswordUiState.Success) {
+                        Text(
+                            "Reset link sent! Check your inbox.",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { authViewModel.sendPasswordReset(resetEmail) },
+                    enabled = resetPasswordState !is ResetPasswordUiState.Loading
+                ) {
+                    Text("Send Link")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showForgotPasswordDialog = false
+                    authViewModel.resetPasswordResetState()
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(SplashGradient)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -54,12 +119,16 @@ fun LoginScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(84.dp)
+                        .size(110.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.18f)),
+                        .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🧭", fontSize = 40.sp)
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "TrailVerse logo",
+                        modifier = Modifier.size(80.dp)
+                    )
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(
@@ -127,7 +196,14 @@ fun LoginScreen(
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(6.dp))
+                    TextButton(
+                        onClick = { showForgotPasswordDialog = true },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Forgot password?")
+                    }
+                    Spacer(Modifier.height(10.dp))
                     Button(
                         onClick = { authViewModel.login(email, password) },
                         enabled = uiState !is AuthUiState.Loading,

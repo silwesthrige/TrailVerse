@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.trailverse_mobile_application.model.Location
 import com.example.trailverse_mobile_application.repository.CloudinaryRepository
 import com.example.trailverse_mobile_application.repository.LocationRepository
+import com.example.trailverse_mobile_application.utils.GeocodingHelper
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +63,7 @@ class LocationViewModel(context: Context) : ViewModel() {
     }
 
     fun addLocation(
+        context: Context,
         name: String,
         description: String,
         category: String,
@@ -88,6 +90,8 @@ class LocationViewModel(context: Context) : ViewModel() {
                 imageUrl = uploadResult.getOrDefault("")
             }
 
+            val city = GeocodingHelper.getCityName(context, latitude, longitude)
+
             val location = Location(
                 name = name,
                 description = description,
@@ -95,6 +99,7 @@ class LocationViewModel(context: Context) : ViewModel() {
                 imageUrl = imageUrl,
                 latitude = latitude,
                 longitude = longitude,
+                city = city,
                 createdBy = userId
             )
             val result = repository.addLocation(location)

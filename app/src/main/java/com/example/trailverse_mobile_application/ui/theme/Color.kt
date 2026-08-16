@@ -3,35 +3,44 @@ package com.example.trailverse_mobile_application.ui.theme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-val ForestGreen = Color(0xFF2E7D32)
-val ForestGreenLight = Color(0xFF60AD5E)
-val ForestGreenDark = Color(0xFF005005)
-val SunsetOrange = Color(0xFFFF7043)
-val SunsetOrangeLight = Color(0xFFFFA270)
-val SkyBlue = Color(0xFF29B6F6)
-val SandBeige = Color(0xFFF5E9DA)
-val CharcoalText = Color(0xFF212121)
+// Core palette — pulled from the logo
+val SunsetOrange = Color(0xFFFF6B35)
+val SunsetOrangeLight = Color(0xFFFF9558)
+val SunsetRed = Color(0xFFE63946)
+val SunGold = Color(0xFFFFB627)
+val SunGoldLight = Color(0xFFFFD166)
+val OceanBlue = Color(0xFF1B6CA8)
+val OceanBlueDeep = Color(0xFF14477A)
+val SkyBlue = Color(0xFF3AA8DB)
+val SkyBlueLight = Color(0xFF6FC3E8)
+
+// Neutral / surface tones
+val SandBeige = Color(0xFFFFF8F0)
+val CharcoalText = Color(0xFF20242C)
 val SoftGray = Color(0xFF757575)
 val CardBackground = Color(0xFFFFFFFF)
 val ErrorRed = Color(0xFFE53935)
 val UpvoteGreen = Color(0xFF43A047)
 val DownvoteRed = Color(0xFFE53935)
+val GoldStar = SunGold
 
-val OceanBlue = Color(0xFF0288D1)
-val TealAccent = Color(0xFF00BFA5)
-val CoralPink = Color(0xFFFF6F91)
-val GoldStar = Color(0xFFFFC107)
-
-// Hero gradients used on Login / Register / Profile
-val HeroGradient = Brush.linearGradient(
-    colors = listOf(ForestGreenDark, ForestGreen, ForestGreenLight)
+// Splash / hero gradient
+val HeroGradient = Brush.verticalGradient(
+    colors = listOf(OceanBlueDeep, OceanBlue, SkyBlue)
 )
 
-// Per-category gradient used on location card photos
+val SunsetGradient = Brush.linearGradient(
+    colors = listOf(SunsetRed, SunsetOrange, SunGold)
+)
+
+val SplashGradient = Brush.verticalGradient(
+    colors = listOf(OceanBlueDeep, OceanBlue, SkyBlueLight, SunGoldLight, SunsetOrange)
+)
+
 fun categoryBrush(category: String): Brush = when (category) {
-    "Nature" -> Brush.linearGradient(listOf(ForestGreenDark, ForestGreenLight))
-    "Food" -> Brush.linearGradient(listOf(SunsetOrange, SunsetOrangeLight))
-    "Viewpoint" -> Brush.linearGradient(listOf(OceanBlue, SkyBlue))
-    "Adventure" -> Brush.linearGradient(listOf(CoralPink, Color(0xFFFF9EB5)))
-    else -> Brush.linearGradient(listOf(TealAccent, Color(0xFF64FFDA)))
+    "Nature" -> Brush.linearGradient(listOf(OceanBlueDeep, OceanBlue))
+    "Food" -> Brush.linearGradient(listOf(SunsetRed, SunsetOrange))
+    "Viewpoint" -> Brush.linearGradient(listOf(SkyBlue, SkyBlueLight))
+    "Adventure" -> Brush.linearGradient(listOf(SunsetOrange, SunGold))
+    else -> Brush.linearGradient(listOf(OceanBlue, SkyBlue))
 }

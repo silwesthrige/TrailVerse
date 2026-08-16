@@ -12,15 +12,25 @@ import com.example.trailverse_mobile_application.ui.screens.DetailScreen
 import com.example.trailverse_mobile_application.ui.screens.LoginScreen
 import com.example.trailverse_mobile_application.ui.screens.MainScreen
 import com.example.trailverse_mobile_application.ui.screens.RegisterScreen
+import com.example.trailverse_mobile_application.ui.screens.SplashScreen
 import com.example.trailverse_mobile_application.viewmodel.AuthViewModel
 
 @Composable
 fun TrailVerseNavGraph() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
-    val startDestination = if (authViewModel.isLoggedIn()) Routes.MAIN else Routes.LOGIN
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    val destination = if (authViewModel.isLoggedIn()) Routes.MAIN else Routes.LOGIN
+                    navController.navigate(destination) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {

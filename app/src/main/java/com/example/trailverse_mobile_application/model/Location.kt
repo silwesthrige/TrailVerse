@@ -8,6 +8,7 @@ data class Location(
     val imageUrl: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val city: String = "",
     val upvotes: Int = 0,
     val downvotes: Int = 0,
     val createdBy: String = "",

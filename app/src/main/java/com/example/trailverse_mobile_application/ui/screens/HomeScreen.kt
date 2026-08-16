@@ -43,7 +43,13 @@ fun HomeScreen(
     val isLoading by locationViewModel.isLoading.collectAsState()
 
     val filtered = remember(query, locations) {
-        locations.filter { it.name.contains(query, ignoreCase = true) }
+        locations
+            .filter {
+                it.name.contains(query, ignoreCase = true) ||
+                        it.city.contains(query, ignoreCase = true) ||
+                        it.description.contains(query, ignoreCase = true)
+            }
+            .sortedByDescending { it.score }
     }
 
     Scaffold(
@@ -95,17 +101,27 @@ fun HomeScreen(
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
                     }
-                    items(filtered, key = { it.id }) { location ->
-                        LocationCard(
-                            location = location,
-                            userVote = userVotes[location.id] ?: 0,
-                            isSaved = savedIds.contains(location.id),
-                            onClick = { onLocationClick(location.id) },
-                            onUpvote = { locationViewModel.vote(location.id, 1) },
-                            onDownvote = { locationViewModel.vote(location.id, -1) },
-                            onToggleSave = { favoriteViewModel.toggleSave(location.id) },
-                            modifier = Modifier.padding(bottom = 14.dp)
-                        )
+                    if (filtered.isEmpty()) {
+                        item {
+                            Text(
+                                "No results for \"$query\"",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 24.dp)
+                            )
+                        }
+                    } else {
+                        items(filtered, key = { it.id }) { location ->
+                            LocationCard(
+                                location = location,
+                                userVote = userVotes[location.id] ?: 0,
+                                isSaved = savedIds.contains(location.id),
+                                onClick = { onLocationClick(location.id) },
+                                onUpvote = { locationViewModel.vote(location.id, 1) },
+                                onDownvote = { locationViewModel.vote(location.id, -1) },
+                                onToggleSave = { favoriteViewModel.toggleSave(location.id) },
+                                modifier = Modifier.padding(bottom = 14.dp)
+                            )
+                        }
                     }
                 }
             }

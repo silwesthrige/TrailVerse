@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -58,6 +56,8 @@ import com.example.trailverse_mobile_application.viewmodel.LocationViewModel
 import com.example.trailverse_mobile_application.viewmodel.LocationViewModelFactory
 import com.google.android.gms.maps.model.LatLng
 import java.io.File
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,8 +149,8 @@ fun AddLocationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
                 .padding(20.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -219,6 +219,7 @@ fun AddLocationScreen(
             Button(
                 onClick = {
                     locationViewModel.addLocation(
+                        context = context,
                         name = name,
                         description = description,
                         category = category,

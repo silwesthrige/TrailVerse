@@ -20,6 +20,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trailverse_mobile_application.ui.theme.HeroGradient
 import com.example.trailverse_mobile_application.viewmodel.AuthUiState
 import com.example.trailverse_mobile_application.viewmodel.AuthViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import com.example.trailverse_mobile_application.R
 
 @Composable
 fun RegisterScreen(
@@ -47,14 +52,19 @@ fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("🌍", fontSize = 44.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "Join TrailVerse",
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Box(
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "TrailVerse logo",
+                        modifier = Modifier.size(80.dp)
+                    )
+                }
                 Text(
                     "Start sharing your favorite places",
                     color = Color.White.copy(alpha = 0.85f),

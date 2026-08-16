@@ -14,11 +14,31 @@ sealed class AuthUiState {
     data class Error(val message: String) : AuthUiState()
 }
 
+sealed class ResetPasswordUiState {
+    object Idle : ResetPasswordUiState()
+    object Loading : ResetPasswordUiState()
+    object Success : ResetPasswordUiState()
+    data class Error(val message: String) : ResetPasswordUiState()
+}
+
+sealed class DeleteAccountUiState {
+    object Idle : DeleteAccountUiState()
+    object Loading : DeleteAccountUiState()
+    object Success : DeleteAccountUiState()
+    data class Error(val message: String) : DeleteAccountUiState()
+}
+
 class AuthViewModel : ViewModel() {
     private val repository = AuthRepository()
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState
+
+    private val _resetPasswordState = MutableStateFlow<ResetPasswordUiState>(ResetPasswordUiState.Idle)
+    val resetPasswordState: StateFlow<ResetPasswordUiState> = _resetPasswordState
+
+    private val _deleteAccountState = MutableStateFlow<DeleteAccountUiState>(DeleteAccountUiState.Idle)
+    val deleteAccountState: StateFlow<DeleteAccountUiState> = _deleteAccountState
 
     fun isLoggedIn(): Boolean = repository.isLoggedIn()
 
@@ -66,5 +86,43 @@ class AuthViewModel : ViewModel() {
 
     fun logout() {
         repository.logout()
+    }
+
+    fun sendPasswordReset(email: String) {
+        if (email.isBlank()) {
+            _resetPasswordState.value = ResetPasswordUiState.Error("Please enter your email")
+            return
+        }
+        _resetPasswordState.value = ResetPasswordUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendPasswordResetEmail(email)
+            _resetPasswordState.value = result.fold(
+                onSuccess = { ResetPasswordUiState.Success },
+                onFailure = { ResetPasswordUiState.Error(it.message ?: "Failed to send reset email") }
+            )
+        }
+    }
+
+    fun resetPasswordResetState() {
+        _resetPasswordState.value = ResetPasswordUiState.Idle
+    }
+
+    fun deleteAccount(password: String) {
+        if (password.isBlank()) {
+            _deleteAccountState.value = DeleteAccountUiState.Error("Please enter your password")
+            return
+        }
+        _deleteAccountState.value = DeleteAccountUiState.Loading
+        viewModelScope.launch {
+            val result = repository.deleteAccount(password)
+            _deleteAccountState.value = result.fold(
+                onSuccess = { DeleteAccountUiState.Success },
+                onFailure = { DeleteAccountUiState.Error(it.message ?: "Failed to delete account") }
+            )
+        }
+    }
+
+    fun resetDeleteAccountState() {
+        _deleteAccountState.value = DeleteAccountUiState.Idle
     }
 }

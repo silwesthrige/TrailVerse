@@ -1,5 +1,6 @@
 package com.example.trailverse_mobile_application.repository
 
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
@@ -41,4 +42,28 @@ class AuthRepository {
     }
 
     fun isLoggedIn(): Boolean = auth.currentUser != null
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteAccount(password: String): Result<Unit> {
+        return try {
+            val user = auth.currentUser ?: return Result.failure(Exception("No signed-in user"))
+            val email = user.email ?: return Result.failure(Exception("No email on account"))
+
+            val credential = EmailAuthProvider.getCredential(email, password)
+            user.reauthenticate(credential).await()
+
+            user.delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

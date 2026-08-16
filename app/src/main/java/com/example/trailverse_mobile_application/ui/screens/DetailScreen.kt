@@ -35,6 +35,17 @@ import com.example.trailverse_mobile_application.viewmodel.DetailViewModel
 import com.example.trailverse_mobile_application.viewmodel.DetailViewModelFactory
 import com.example.trailverse_mobile_application.viewmodel.FavoriteViewModel
 
+import androidx.compose.material.icons.filled.Directions
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(locationId: String, onBack: () -> Unit) {
@@ -176,6 +187,64 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                     )
 
                     Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(24.dp))
+                    Text("Location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(10.dp))
+
+                    val locationLatLng = LatLng(loc.latitude, loc.longitude)
+                    val detailCameraState = rememberCameraPositionState {
+                        position = CameraPosition.fromLatLngZoom(locationLatLng, 15f)
+                    }
+                    val context = LocalContext.current
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                    ) {
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = detailCameraState,
+                            properties = MapProperties(isMyLocationEnabled = false),
+                            uiSettings = MapUiSettings(
+                                zoomControlsEnabled = false,
+                                scrollGesturesEnabled = false,
+                                zoomGesturesEnabled = false,
+                                tiltGesturesEnabled = false,
+                                rotationGesturesEnabled = false
+                            ),
+                            onMapClick = {
+                                val gmmIntentUri = android.net.Uri.parse(
+                                    "google.navigation:q=${loc.latitude},${loc.longitude}"
+                                )
+                                val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, gmmIntentUri)
+                                mapIntent.setPackage("com.google.android.apps.maps")
+                                context.startActivity(mapIntent)
+                            }
+                        ) {
+                            Marker(
+                                state = rememberMarkerState(position = locationLatLng),
+                                title = loc.name
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Button(
+                        onClick = {
+                            val gmmIntentUri = android.net.Uri.parse(
+                                "google.navigation:q=${loc.latitude},${loc.longitude}"
+                            )
+                            val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, gmmIntentUri)
+                            mapIntent.setPackage("com.google.android.apps.maps")
+                            context.startActivity(mapIntent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Directions, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get Directions")
+                    }
                     Text(
                         "Comments (${comments.size})",
                         style = MaterialTheme.typography.titleMedium,
@@ -208,6 +277,7 @@ fun DetailScreen(locationId: String, onBack: () -> Unit) {
                 }
             }
         }
+
 
         if (comments.isEmpty()) {
             item {
@@ -242,6 +312,7 @@ private fun CircleIconButton(icon: androidx.compose.ui.graphics.vector.ImageVect
         }
     }
 }
+
 
 @Composable
 private fun CommentRow(comment: Comment) {
