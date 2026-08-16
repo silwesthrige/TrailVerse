@@ -13,7 +13,7 @@ class LocationRepository {
     private val db = FirebaseFirestore.getInstance()
     private val locationsRef = db.collection("locations")
 
-    // Live feed of ALL locations, newest first — used by Home/Explore/Map/Saved
+    // Live feed of ALL locations, newest first
     fun getLocationsFlow(): Flow<List<Location>> = callbackFlow {
         val listener = locationsRef
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -30,7 +30,7 @@ class LocationRepository {
         awaitClose { listener.remove() }
     }
 
-    // Live feed of a SINGLE location by ID — used by DetailScreen
+    // Live feed of a SINGLE location by ID
     fun getLocationFlow(locationId: String): Flow<Location?> = callbackFlow {
         val listener = locationsRef.document(locationId).addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -43,10 +43,29 @@ class LocationRepository {
         awaitClose { listener.remove() }
     }
 
+    // Checks if a location with the same name (case-insensitive) already exists
+    suspend fun locationNameExists(name: String): Boolean {
+        return try {
+            val normalizedName = name.trim().lowercase()
+            val snapshot = locationsRef
+                .whereEqualTo("nameLower", normalizedName)
+                .limit(1)
+                .get()
+                .await()
+            !snapshot.isEmpty
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun addLocation(location: Location): Result<String> {
         return try {
             val docRef = locationsRef.document()
-            val toSave = location.copy(id = docRef.id, createdAt = System.currentTimeMillis())
+            val toSave = location.copy(
+                id = docRef.id,
+                nameLower = location.name.trim().lowercase(),
+                createdAt = System.currentTimeMillis()
+            )
             docRef.set(toSave).await()
             Result.success(docRef.id)
         } catch (e: Exception) {

@@ -78,6 +78,14 @@ class LocationViewModel(context: Context) : ViewModel() {
         }
         _addState.value = AddLocationUiState.Loading
         viewModelScope.launch {
+            val alreadyExists = repository.locationNameExists(name)
+            if (alreadyExists) {
+                _addState.value = AddLocationUiState.Error(
+                    "\"$name\" has already been added by another traveler. Try a more specific name."
+                )
+                return@launch
+            }
+
             var imageUrl = ""
             if (imageUri != null) {
                 val uploadResult = cloudinaryRepository.uploadImage(imageUri)

@@ -3,6 +3,7 @@ package com.example.trailverse_mobile_application.model
 data class Location(
     val id: String = "",
     val name: String = "",
+    val nameLower: String = "",
     val description: String = "",
     val category: String = "Nature",
     val imageUrl: String = "",
